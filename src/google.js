@@ -46,10 +46,11 @@ function googleAuthMiddleware(options = {}) {
       };
       return next();
     } else {
+      const returnUrl = query.return || ctx.headers.referer;
       let state;
-      if (query.return) {
+      if (returnUrl) {
         state = encodeState({
-          returnUrl: query.return,
+          returnUrl,
         });
       }
       const authUrl = client.generateAuthUrl({
