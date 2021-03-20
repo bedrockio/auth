@@ -39,7 +39,7 @@ function googleAuthMiddleware(options = {}) {
       const { tokens } = await client.getToken(query.code);
       client.setCredentials(tokens);
       const [email, names] = await Promise.all([resolveEmail(client), resolveNames(client)]);
-      ctx.state.googleAuth = {
+      ctx.state.oAuthInfo = {
         email,
         names,
         ...decodeState(query.state),
