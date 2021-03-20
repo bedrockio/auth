@@ -1,0 +1,16 @@
+{
+  "name": "@bedrockio/auth",
+  "version": "1.0.0",
+  "description": "Authentication tools for Bedrock.",
+  "repository": "git@github.com:bedrockio/auth.git",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "google-auth-library": "^7.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.22.0",
+    "eslint-config-prettier": "^8.1.0",
+    "prettier-eslint": "^12.0.0"
+  }
+}
