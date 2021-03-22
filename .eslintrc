@@ -5,6 +5,7 @@
   },
   "extends": [
     "eslint:recommended",
+    "plugin:jest/recommended",
     "prettier"
   ],
   "rules": {
