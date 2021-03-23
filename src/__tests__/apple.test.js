@@ -58,6 +58,7 @@ describe('appleAuthMiddleware', () => {
         });
         await getMiddleware()(ctx, () => {});
         expect(ctx.state.authInfo).toEqual({
+          app: 'web',
           authId: 'com.test',
           email: 'foo@bar.com',
           names: {},
@@ -77,6 +78,7 @@ describe('appleAuthMiddleware', () => {
         });
         await getMiddleware()(ctx, () => {});
         expect(ctx.state.authInfo).toEqual({
+          app: 'web',
           authId: 'com.test',
           email: 'foo@bar.com',
           names: {

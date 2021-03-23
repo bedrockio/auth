@@ -32,9 +32,11 @@ function appleAuthMiddleware(config = {}) {
           app,
           code: body.code,
         });
+        const names = resolveNames(body);
         ctx.state.authInfo = {
+          names,
+          ...state,
           ...tokenData,
-          names: resolveNames(body),
         };
         return next();
       } catch (err) {
