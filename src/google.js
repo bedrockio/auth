@@ -1,9 +1,9 @@
 const { OAuth2Client } = require('google-auth-library');
 const { encodeState, decodeState } = require('./utils');
 
-async function resolveEmail(client) {
-  const { email } = await client.getTokenInfo(client.credentials.access_token);
-  return email;
+async function validateToken(client) {
+  const { email, aud: authId } = await client.getTokenInfo(client.credentials.access_token);
+  return { email, authId };
 }
 
 async function resolveNames(client) {
@@ -36,10 +36,10 @@ function googleAuthMiddleware(options = {}) {
     if (query.code) {
       const { tokens } = await client.getToken(query.code);
       client.setCredentials(tokens);
-      const [email, names] = await Promise.all([resolveEmail(client), resolveNames(client)]);
+      const [tokenData, names] = await Promise.all([validateToken(client), resolveNames(client)]);
       ctx.state.authInfo = {
-        email,
         names,
+        ...tokenData,
         ...decodeState(query.state),
       };
       return next();

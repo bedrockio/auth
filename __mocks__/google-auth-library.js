@@ -32,6 +32,7 @@ class OAuth2Client {
 
   getTokenInfo() {
     return {
+      aud: 'fake aud',
       email: 'fake email',
     };
   }
