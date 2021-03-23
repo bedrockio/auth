@@ -1,5 +1,5 @@
 const { OAuth2Client } = require('google-auth-library');
-const { encodeState, decodeState } = require('./utils');
+const { wrapMiddleware, encodeState, decodeState } = require('./utils');
 
 async function validateToken(client) {
   const { email, aud: authId } = await client.getTokenInfo(client.credentials.access_token);
@@ -31,34 +31,36 @@ async function resolveNames(client) {
 function googleAuthMiddleware(options = {}) {
   const { clientId, clientSecret, redirectUri } = options;
   const client = new OAuth2Client(clientId, clientSecret, redirectUri);
-  return async (ctx, next) => {
-    const { query } = ctx.request;
-    if (query.code) {
-      const { tokens } = await client.getToken(query.code);
-      client.setCredentials(tokens);
-      const [tokenData, names] = await Promise.all([validateToken(client), resolveNames(client)]);
-      ctx.state.authInfo = {
-        names,
-        ...tokenData,
-        ...decodeState(query.state),
-      };
-      return next();
-    } else {
-      const returnUrl = query.return || ctx.headers.referer;
-      let state;
-      if (returnUrl) {
-        state = encodeState({
-          returnUrl,
+  return wrapMiddleware({
+    GET: async (ctx, next) => {
+      const { query } = ctx.request;
+      if (query.code) {
+        const { tokens } = await client.getToken(query.code);
+        client.setCredentials(tokens);
+        const [tokenData, names] = await Promise.all([validateToken(client), resolveNames(client)]);
+        ctx.state.authInfo = {
+          names,
+          ...tokenData,
+          ...decodeState(query.state),
+        };
+        return next();
+      } else {
+        const returnUrl = query.return || ctx.headers.referer;
+        let state;
+        if (returnUrl) {
+          state = encodeState({
+            returnUrl,
+          });
+        }
+        const authUrl = client.generateAuthUrl({
+          access_type: 'offline',
+          scope: 'email profile',
+          state,
         });
+        ctx.redirect(authUrl);
       }
-      const authUrl = client.generateAuthUrl({
-        access_type: 'offline',
-        scope: 'email profile',
-        state,
-      });
-      ctx.redirect(authUrl);
-    }
-  };
+    },
+  });
 }
 
 module.exports = {

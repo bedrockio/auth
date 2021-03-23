@@ -57,5 +57,24 @@ describe('googleAuthMiddleware', () => {
       }
     });
   });
+
+  describe('error handling of other methods', () => {
+
+    it('POST', async () => {
+      const ctx = new FakeKoaContext({ method: 'POST' });
+      await expect(googleAuthMiddleware()(ctx, () => {})).rejects.toThrow('Method not allowed');
+    });
+
+    it('PATCH', async () => {
+      const ctx = new FakeKoaContext({ method: 'PATCH' });
+      await expect(googleAuthMiddleware()(ctx, () => {})).rejects.toThrow('Method not allowed');
+    });
+
+    it('DELETE', async () => {
+      const ctx = new FakeKoaContext({ method: 'DELETE' });
+      await expect(googleAuthMiddleware()(ctx, () => {})).rejects.toThrow('Method not allowed');
+    });
+  });
+
 });
 

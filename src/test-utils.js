@@ -46,8 +46,8 @@ class FakeKoaContext {
     this.redirectedUrl = url;
   }
 
-  throw(status) {
-    this.thrownStatus = status;
+  throw(status, msg) {
+    throw new Error(msg);
   }
 }
 

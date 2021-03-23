@@ -16,13 +16,16 @@ beforeAll(() => {
 });
 
 describe('appleAuthMiddleware', () => {
-
   describe('GET', () => {
     it('should redirect with app state by default', async () => {
       const ctx = new FakeKoaContext();
       await getMiddleware()(ctx, () => {});
       const state = Buffer.from(JSON.stringify({ app: 'web' })).toString('base64');
-      expect(ctx.redirectedUrl).toBe(`https://appleid.apple.com/auth/authorize?response_type=code+id_token&response_mode=form_post&redirect_uri=fakeRedirect&scope=name+email&client_id=fakeService&state=${encodeURIComponent(state)}`);
+      expect(ctx.redirectedUrl).toBe(
+        `https://appleid.apple.com/auth/authorize?response_type=code+id_token&response_mode=form_post&redirect_uri=fakeRedirect&scope=name+email&client_id=fakeService&state=${encodeURIComponent(
+          state
+        )}`
+      );
     });
 
     it('should redirect accept optional return url', async () => {
@@ -33,14 +36,16 @@ describe('appleAuthMiddleware', () => {
       });
       await getMiddleware()(ctx, () => {});
       const state = Buffer.from(JSON.stringify({ app: 'web', returnUrl: 'fake return' })).toString('base64');
-      expect(ctx.redirectedUrl).toBe(`https://appleid.apple.com/auth/authorize?response_type=code+id_token&response_mode=form_post&redirect_uri=fakeRedirect&scope=name+email&client_id=fakeService&state=${encodeURIComponent(state)}`);
+      expect(ctx.redirectedUrl).toBe(
+        `https://appleid.apple.com/auth/authorize?response_type=code+id_token&response_mode=form_post&redirect_uri=fakeRedirect&scope=name+email&client_id=fakeService&state=${encodeURIComponent(
+          state
+        )}`
+      );
     });
   });
 
   describe('POST', () => {
-
     describe('web', () => {
-
       it('should resolve email with valid code', async () => {
         mockResponse('success');
         const state = Buffer.from(JSON.stringify({ app: 'web' })).toString('base64');
@@ -75,7 +80,7 @@ describe('appleAuthMiddleware', () => {
           names: {
             firstName: 'Potato',
             lastName: 'Head',
-          }
+          },
         });
       });
 
@@ -87,10 +92,8 @@ describe('appleAuthMiddleware', () => {
             code: 'invalid code',
           },
         });
-        await getMiddleware()(ctx, () => {});
-        expect(ctx.thrownStatus).toBe(400);
+        await expect(getMiddleware()(ctx, () => {})).rejects.toThrow('Invalid request');
       });
-
     });
 
     describe('ios', () => {
@@ -111,22 +114,17 @@ describe('appleAuthMiddleware', () => {
         });
       });
     });
-
-
   });
 
   describe('other', () => {
     it('should throw an error on PATCH', async () => {
       const ctx = new FakeKoaContext({ method: 'PATCH' });
-      await getMiddleware()(ctx, () => {});
-      expect(ctx.thrownStatus).toBe(405);
+      await expect(getMiddleware()(ctx, () => {})).rejects.toThrow('Method not allowed');
     });
 
     it('should throw an error on DELETE', async () => {
       const ctx = new FakeKoaContext({ method: 'DELETE' });
-      await getMiddleware()(ctx, () => {});
-      expect(ctx.thrownStatus).toBe(405);
+      await expect(getMiddleware()(ctx, () => {})).rejects.toThrow('Method not allowed');
     });
   });
-
 });

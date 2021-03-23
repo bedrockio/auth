@@ -1,6 +1,5 @@
-const { encodeState, decodeState } = require('./utils');
 const { OAuth2Client } = require('./apple-auth-library');
-
+const { wrapMiddleware, encodeState, decodeState } = require('./utils');
 
 function resolveNames(body) {
   if (body.user) {
@@ -10,15 +9,23 @@ function resolveNames(body) {
   return {};
 }
 
-
 function appleAuthMiddleware(config = {}) {
-
   const client = new OAuth2Client(config);
 
-  return async (ctx, next) => {
-    const { method, body } = ctx.request;
-    if (method === 'POST') {
+  return wrapMiddleware({
+    GET: (ctx) => {
+      const state = encodeState({
+        app: 'web',
+        returnUrl: ctx.request.query.return || ctx.headers.referer,
+      });
+      const authUrl = client.generateAuthUrl({
+        state,
+      });
+      ctx.redirect(authUrl);
+    },
+    POST: async (ctx, next) => {
       try {
+        const { body } = ctx.request;
         const state = body.state ? decodeState(body.state) : {};
         const app = state.app || 'ios';
         const email = await client.validateCode({
@@ -30,22 +37,11 @@ function appleAuthMiddleware(config = {}) {
           names: resolveNames(body),
         };
         return next();
-      } catch(err) {
+      } catch (err) {
         ctx.throw(400, 'Invalid request');
       }
-    } else if (method === 'GET') {
-      const state = encodeState({
-        app: 'web',
-        returnUrl: ctx.request.query.return || ctx.headers.referer,
-      });
-      const authUrl = client.generateAuthUrl({
-        state,
-      });
-      ctx.redirect(authUrl);
-    } else {
-      ctx.throw(405, 'Method not allowed');
-    }
-  };
+    },
+  });
 }
 
 module.exports = {
