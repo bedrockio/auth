@@ -1,6 +1,8 @@
 const { OAuth2Client } = require('google-auth-library');
 const { wrapMiddleware, encodeState, decodeState } = require('./utils');
 
+const provider = 'google';
+
 async function validateToken(client) {
   const { email, aud: authId } = await client.getTokenInfo(client.credentials.access_token);
   return { email, authId };
@@ -40,6 +42,7 @@ function googleAuthMiddleware(options = {}) {
         const [tokenData, names] = await Promise.all([validateToken(client), resolveNames(client)]);
         ctx.state.authInfo = {
           names,
+          provider,
           ...tokenData,
           ...decodeState(query.state),
         };

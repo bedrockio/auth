@@ -44,6 +44,7 @@ describe('googleAuthMiddleware', () => {
     });
     await googleAuthMiddleware()(ctx, () => {});
     expect(ctx.state.authInfo).toEqual({
+      provider: 'google',
       authId: 'fake aud',
       email: 'fake email',
       names: {

@@ -1,6 +1,8 @@
 const { OAuth2Client } = require('./apple-auth-library');
 const { wrapMiddleware, encodeState, decodeState } = require('./utils');
 
+const provider = 'apple';
+
 function resolveNames(body) {
   if (body.user) {
     const { name } = JSON.parse(body.user);
@@ -34,7 +36,9 @@ function appleAuthMiddleware(config = {}) {
         });
         const names = resolveNames(body);
         ctx.state.authInfo = {
+          app,
           names,
+          provider,
           ...state,
           ...tokenData,
         };
