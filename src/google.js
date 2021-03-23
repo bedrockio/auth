@@ -1,12 +1,5 @@
 const { OAuth2Client } = require('google-auth-library');
-
-function encodeState(state) {
-  return Buffer.from(JSON.stringify(state)).toString('base64');
-}
-
-function decodeState(str) {
-  return str ? JSON.parse(Buffer.from(str, 'base64').toString()) : null;
-}
+const { encodeState, decodeState } = require('./utils');
 
 async function resolveEmail(client) {
   const { email } = await client.getTokenInfo(client.credentials.access_token);
@@ -26,7 +19,12 @@ async function resolveNames(client) {
   }
   if (name) {
     const { metadata, ...rest } = name;
-    return rest;
+    return {
+      ...rest,
+      // Normalize firstName and lastName
+      firstName: rest.givenName,
+      lastName: rest.familyName,
+    };
   }
 }
 
@@ -39,7 +37,7 @@ function googleAuthMiddleware(options = {}) {
       const { tokens } = await client.getToken(query.code);
       client.setCredentials(tokens);
       const [email, names] = await Promise.all([resolveEmail(client), resolveNames(client)]);
-      ctx.state.oAuthInfo = {
+      ctx.state.authInfo = {
         email,
         names,
         ...decodeState(query.state),

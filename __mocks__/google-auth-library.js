@@ -1,6 +1,3 @@
-
-
-
 class OAuth2Client {
 
   constructor(clientId, clientSecret, redirectUri) {
@@ -50,6 +47,9 @@ class OAuth2Client {
             },
             givenName: 'Bob',
             familyName: 'Johnson',
+            displayName: 'Bob Johnson',
+            displayNameLastFirst: 'Johnson, Bob',
+            unstructuredName: 'Bob Johnson'
           }
         ]
       }
