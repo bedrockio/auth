@@ -103,8 +103,8 @@ class OAuth2Client {
     if (data.error) {
       throw new Error(data.error);
     }
-    const { email } = jwt.decode(data.id_token);
-    return email;
+    const { email, aud: authId } = jwt.decode(data.id_token);
+    return { email, authId };
   }
 
 }

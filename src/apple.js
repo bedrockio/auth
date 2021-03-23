@@ -28,12 +28,12 @@ function appleAuthMiddleware(config = {}) {
         const { body } = ctx.request;
         const state = body.state ? decodeState(body.state) : {};
         const app = state.app || 'ios';
-        const email = await client.validateCode({
+        const tokenData = await client.validateCode({
           app,
           code: body.code,
         });
         ctx.state.authInfo = {
-          email,
+          ...tokenData,
           names: resolveNames(body),
         };
         return next();
