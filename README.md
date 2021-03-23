@@ -83,11 +83,6 @@ The above code is boilerplate but will work with a Bedrock project out of the bo
 - Validated information is set as `ctx.state.authInfo`.
 - Middleware hands off to your route handler.
 
-From here your app can handle as needed. `authInfo` contains:
-
-- `email` - The validated email address of the authenticated user. This will always be set.
-- `names` - An object containing the names of the user. See the note [below](#names) to for the exact fields.
-
 ---
 
 ## Apple
@@ -162,18 +157,16 @@ router.all(
 );
 ```
 
-From here your app can handle as needed. `authInfo` contains:
-
-- `email` - The validated email address of the authenticated user. Note that this may be a proxy email if the user has opted out of providing their real email.
-- `names` - An object containing the names of the user. See the note [below](#names) to for the exact fields. Note that names are only populated on first authentication, and will not exist on subsequent authenication calls. To reset this you must go to [appleid.apple.com](https://appleid.apple.com/) and remove your app from the list of authentication methods.
-
 ---
 
-## Names
+## AuthInfo
 
-Note that the `names` object contains different fields depending on the service. When populated, `firstName` and `lastName` are guaranteed to exist for both Apple and Google, however other fields are Google specific. This is to normalize behavior which allows the same handler to be used for both Google and Apple routes.
+The `authInfo` object returned on `ctx.state` will contain the following values:
 
-- `names` - An object containing the names of the user.
+- `email` - The validated email address of the authenticated user. In the case of Apple this may be a proxy email if the user has opted out of providing their real email.
+- `authId` - An ID that maps to the `aud` "audience claim" of the JWT token. This will disntinguish the authentication method specific to the app you set up in the setup step.
+- `provider` - A string identifying the provider, either `apple` or `google`.
+- `names` - An object containing the names of the user. Note that Apple only populates names on first authentication, and this will not exist on subsequent authenication calls. To reset this you must go to [appleid.apple.com](https://appleid.apple.com/) and remove your app from the list of authentication methods. The `names` object may differ depending on the service:
   - `firstName` - Provided by Apple, copied from `givenName` for Google.
   - `lastName` - Provided by Apple, copied from `familyName` for Google.
   - `givenName` - Google only.
