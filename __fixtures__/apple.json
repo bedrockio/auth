@@ -1,0 +1,21 @@
+{
+  "base": "https://appleid.apple.com/auth/token",
+  "success": {
+    "method": "POST",
+    "status": 200,
+    "body": {
+      "access_token": "a19db899090c84474bfc40b2d879b1eb9.0.rrvvu.LPt3MQ7dlS9tCjXObiVoqw",
+      "token_type": "Bearer",
+      "expires_in": 3600,
+      "refresh_token": "r11aa61d1744048c3b67c481bbc57874c.0.rrvvu.EupnI0Su03AA76dC11RUOA",
+      "id_token": "eyJraWQiOiJZdXlYb1kiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiY29tLnRlc3QiLCJleHAiOjE2MTY1Nzk0NTIsImlhdCI6MTYxNjQ5MzA1Miwic3ViIjoiMDAxNTU0LmI4OWY3ZGU2YmI4YTRiMTZiYjNlOGJjNGFlZGNjMmMwLjA1MDgiLCJhdF9oYXNoIjoiMFpaNDlYWjAwUnlvN0l0Z29HM0pjQSIsImVtYWlsIjoiZm9vQGJhci5jb20iLCJlbWFpbF92ZXJpZmllZCI6InRydWUiLCJhdXRoX3RpbWUiOjE2MTY0OTMwNTEsIm5vbmNlX3N1cHBvcnRlZCI6dHJ1ZX0.AqO53A1fAhG-JMyfwJ631UH6DIlSogdOF5oiM3G2oMSHeV9awA45u6TTuDPhP1mbDQFeWloKC12ANQAE1p1SVQl0fsIqs4fg_jvfzeqUjAcRPjk2thypzLssUjDnpUKMvHY5xyKtPv9Gdz545z4l3QF6lcFj0i7qiUliMarjYdj22KkGZXA0IEWca3bJC3hX312Hxcm3fDP8Y8kglffJAAHLcd6DKP5w3azIEcxAstv5zJ38bIlKzKwWBgA0paxA7gD0YSg5RLjqeOU1fIJot6CEMxRXkU6OuzkaRlMa9CEsuBN0E27z31bHlr2vWGpCA1xoMvUaSx_CQTwkj1JMAA"
+    }
+  },
+  "invalid-code": {
+    "method": "POST",
+    "status": 400,
+    "body": {
+      "error": "invalid_grant"
+    }
+  }
+}

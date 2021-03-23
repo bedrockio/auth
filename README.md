@@ -1,5 +1,7 @@
 # @bedrockio/auth
 
+This package contains middleware to enable Google or Apple ID sign-in for a Bedrock project.
+
 ## Installation
 
 ```bash
@@ -10,7 +12,9 @@ npm install @bedrockio/auth
 
 First we need to set up credentials for the new OAuth 2.0 flow we want to create.
 
-### Google
+---
+
+## Google
 
 To setup Google authentication, first go to [APIs & Services > Credentials > Create Credentials > OAuth Client ID](https://console.cloud.google.com/apis/credentials/oauthclient) for your project.
 
@@ -28,12 +32,11 @@ GOOGLE_OAUTH_CLIENT_SECRET=my-client-secret
 GOOGLE_OAUTH_REDIRECT_URI=http://localhost:2300/1/auth/google
 ```
 
-## Usage
-
 This package exports middleware for use with a Bedrock route based on Koa. To use, simply create a new route and add it to the middleware for that route:
 
 ```js
 const { googleAuthMiddleware } = require('@bedrockio/auth');
+const tokens = require('../utils/tokens');
 const router = new Router();
 router.get(
   '/google',
@@ -43,7 +46,7 @@ router.get(
     redirectUri,
   }),
   async (ctx) => {
-    const { email, names, returnUrl } = ctx.state.oAuthInfo;
+    const { email, names, returnUrl } = ctx.state.authInfo;
     let user = await User.findOne({
       email,
       deletedAt: {
@@ -53,7 +56,8 @@ router.get(
     if (!user) {
       user = await User.create({
         email,
-        name: [names.firstName, names.givenName].join(' '),
+        // See note on names below
+        name: [names.firstName, names.lastName].join(' '),
       });
     }
     const token = tokens.createUserToken(user);
@@ -76,15 +80,104 @@ The above code is boilerplate but will work with a Bedrock project out of the bo
 - From there authenticaion may involve a password or two-factor step, "choose account" dialog or full signup depending on how the user authenticates.
 - Redirects back to `http://localhost:2300/1/auth/google?code=access_code`
 - Middleware validates the access code and receives the email and names for the authenticated user.
-- Validated information is set as `ctx.state.oAuthInfo`.
+- Validated information is set as `ctx.state.authInfo`.
 - Middleware hands off to your route handler.
 
-From here your app can handle as needed. `oAuthInfo` contains:
+From here your app can handle as needed. `authInfo` contains:
 
 - `email` - The validated email address of the authenticated user. This will always be set.
+- `names` - An object containing the names of the user. See the note [below](#names) to for the exact fields.
+
+---
+
+## Apple
+
+Setup for Apple is a bit more involved. This middleware handles authentication with Apple ID for both iOS and web apps, however the setup process is somewhat different for each. A visual guide for setting up web authentication can be found [here](https://github.com/ananay/apple-auth/blob/master/SETUP.md).
+
+- Create a new Apple developer account and take note of the team id.
+- Set up a Primary App ID under "Identifiers" > "App IDs".
+- If setting up an iOS app, add "Sign in with Apple" and take note of the app ID.
+- If setting up for web, create a new Service ID under "Identifiers" > "Service IDs". This should configure "Sign In Apple ID", point to the Primary App ID, and have domains and Return URLs properly set up.
+- Note that "Return URLs" must be HTTPS, so local testing can be difficult. Cloudflare provides a [tunneling service](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/create-tunnel) that can help here but requires an account.
+- Create a new key under "Keys". It will need to be enabled for "Sign in with Apple" and point to the Primary App ID. Download the key and take note of the key ID.
+
+You will need to take note of the various settings you created and add them to your `.env` file:
+
+```bash
+APPLE_TEAM_ID=team-id
+APPLE_APP_ID=app-id # (ios only)
+APPLE_SERVICE_ID=service-id # (web only)
+APPLE_REDIRECT_URI=redirect-uri # (web only)
+APPLE_PRIVATE_KEY_ID=private-key-id
+
+# Do not commit this file to your repo!
+APPLE_PRIVATE_KEY=path/to/key.p8
+```
+
+This package exports middleware for use with a Bedrock route based on Koa. To use, simply create a new route and add it to the middleware for that route.
+
+```js
+const { appleAuthMiddleware } = require('@bedrockio/auth');
+const tokens = require('../utils/tokens');
+const router = new Router();
+
+// Note: The Apple ID authentication flow involves a POST request,
+// so the router must handle multiple methods. This middleware will
+// handle GET and POST requests and throw a 405 for anything else.
+router.all(
+  '/apple',
+  appleAuthMiddleware({
+    keyId,
+    appId,
+    teamId,
+    serviceId,
+    redirectUri,
+    // Note that this config can be either text or a path to a file.
+    privateKey,
+  }),
+  async (ctx) => {
+    const { email, names, returnUrl } = ctx.state.authInfo;
+    let user = await User.findOne({
+      email,
+      deletedAt: {
+        $exists: false,
+      },
+    });
+    if (!user) {
+      user = await User.create({
+        email,
+        // See note on names below
+        name: [names.firstName, names.lastName].join(' '),
+      });
+    }
+    const token = tokens.createUserToken(user);
+    if (returnUrl) {
+      const url = new URL(returnUrl, APP_URL);
+      url.searchParams.append('token', token);
+      ctx.redirect(url);
+    } else {
+      ctx.body = { data: { token } };
+    }
+  }
+);
+```
+
+From here your app can handle as needed. `authInfo` contains:
+
+- `email` - The validated email address of the authenticated user. Note that this may be a proxy email if the user has opted out of providing their real email.
+- `names` - An object containing the names of the user. See the note [below](#names) to for the exact fields. Note that names are only populated on first authentication, and will not exist on subsequent authenication calls. To reset this you must go to [appleid.apple.com](https://appleid.apple.com/) and remove your app from the list of authentication methods.
+
+---
+
+## Names
+
+Note that the `names` object contains different fields depending on the service. When populated, `firstName` and `lastName` are guaranteed to exist for both Apple and Google, however other fields are Google specific. This is to normalize behavior which allows the same handler to be used for both Google and Apple routes.
+
 - `names` - An object containing the names of the user.
-  - `givenName` - ???
-  - `familyName` - ???
-  - `displayName` - ???
-  - `displayNameLastFirst`: ???
-  - `unstructuredName`: ???
+  - `firstName` - Provided by Apple, copied from `givenName` for Google.
+  - `lastName` - Provided by Apple, copied from `familyName` for Google.
+  - `givenName` - Google only.
+  - `familyName` - Google only.
+  - `displayName` - Google only.
+  - `displayNameLastFirst`: Google only.
+  - `unstructuredName`: Google only.
